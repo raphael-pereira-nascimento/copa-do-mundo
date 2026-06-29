@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authConfig } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const sessao = await getServerSession(authConfig);
+    const sessao = await auth();
     if (!sessao?.user?.email) {
       const todasFigurinhas = await prisma.figurinha.findMany({
         include: { selecao: { select: { nome: true, codigoIso: true, grupo: true, bandeiraUrl: true, figurinhaUrl: true } } },
@@ -52,7 +51,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const sessao = await getServerSession(authConfig);
+    const sessao = await auth();
     if (!sessao?.user?.email) {
       return NextResponse.json({ message: "Não autorizado." }, { status: 401 });
     }
