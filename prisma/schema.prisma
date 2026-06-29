@@ -27,6 +27,7 @@ model Selecao {
   grupo            String
   bandeiraUrl      String?
   figurinhaUrl     String?
+  tecnico          String?
   jogos            Int                @default(0)
   vitorias         Int                @default(0)
   empates          Int                @default(0)
@@ -40,6 +41,7 @@ model Selecao {
   partidasMandante Partida[]          @relation("mandante")
   partidasVisitante Partida[]         @relation("visitante")
   figurinha        Figurinha?
+  jogadores        Jogador[]
 }
 
 model Partida {
@@ -74,6 +76,18 @@ model Estadio {
   imagens         String[]
   coordenadas     String?
   partidas        Partida[]
+}
+
+model Jogador {
+  id          String   @id @default(uuid())
+  nome        String
+  posicao     String
+  numeroCamisa Int
+  selecaoId   String
+  selecao     Selecao  @relation(fields: [selecaoId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([selecaoId, numeroCamisa])
 }
 
 model Figurinha {
