@@ -1,0 +1,98 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authConfig } from "@/lib/auth";
+
+export async function POST(req: Request) {
+  try {
+    const sessao = await getServerSession(authConfig);
+    if (!sessao?.user) {
+      return NextResponse.json({ message: "Não autorizado." }, { status: 401 });
+    }
+
+    const { mandanteId, visitanteId, golsMandante, golsVisitante } = await req.json();
+
+    if (golsMandante < 0 || golsVisitante < 0) {
+      return NextResponse.json(
+        { message: "Gols não podem ser negativos." },
+        { status: 400 }
+      );
+    }
+
+    const partidaExistente = await prisma.partida.findFirst({
+      where: { mandanteId, visitanteId, fase: "grupos" },
+    });
+
+    if (partidaExistente) {
+      await prisma.partida.update({
+        where: { id: partidaExistente.id },
+        data: { golsMandante, golsVisitante, jogadaPorId: sessao.user.id },
+      });
+    } else {
+      await prisma.partida.create({
+        data: {
+          mandanteId,
+          visitanteId,
+          golsMandante,
+          golsVisitante,
+          jogadaPorId: sessao.user.id,
+          dataPartida: new Date(),
+        },
+      });
+    }
+
+    await recalcularSelecao(mandanteId);
+    await recalcularSelecao(visitanteId);
+
+    return NextResponse.json({ message: "Placar salvo com sucesso!" });
+  } catch {
+    return NextResponse.json(
+      { message: "Erro ao salvar placar." },
+      { status: 500 }
+    );
+  }
+}
+
+async function recalcularSelecao(selecaoId: string) {
+  const partidas = await prisma.partida.findMany({
+    where: {
+      OR: [{ mandanteId: selecaoId }, { visitanteId: selecaoId }],
+      fase: "grupos",
+    },
+  });
+
+  let jogos = 0;
+  let vitorias = 0;
+  let empates = 0;
+  let derrotas = 0;
+  let golsPro = 0;
+  let golsContra = 0;
+
+  for (const p of partidas) {
+    jogos++;
+    const golsMandante = p.golsMandante ?? 0;
+    const golsVisitante = p.golsVisitante ?? 0;
+
+    if (p.mandanteId === selecaoId) {
+      golsPro += golsMandante;
+      golsContra += golsVisitante;
+      if (golsMandante > golsVisitante) vitorias++;
+      else if (golsMandante === golsVisitante) empates++;
+      else derrotas++;
+    } else {
+      golsPro += golsVisitante;
+      golsContra += golsMandante;
+      if (golsVisitante > golsMandante) vitorias++;
+      else if (golsVisitante === golsMandante) empates++;
+      else derrotas++;
+    }
+  }
+
+  const saldoGols = golsPro - golsContra;
+  const pontos = vitorias * 3 + empates;
+
+  await prisma.selecao.update({
+    where: { id: selecaoId },
+    data: { jogos, vitorias, empates, derrotas, golsPro, golsContra, saldoGols, pontos },
+  });
+}
