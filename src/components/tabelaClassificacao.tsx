@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, CheckCircle2, Circle, Minus, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CheckCircle2, Circle, AlertCircle, Calendar, Clock, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { BandeiraSelecao } from "@/components/bandeiraSelecao";
@@ -31,14 +30,26 @@ interface Partida {
   visitanteId: string;
   golsMandante: number;
   golsVisitante: number;
+  dataPartida?: string | null;
+  estadioId?: string | null;
   mandante: { nome: string; codigoIso: string };
   visitante: { nome: string; codigoIso: string };
+  estadio?: { id: string; nome: string; cidade: string; pais: string } | null;
+}
+
+interface EstadioItem {
+  id: string;
+  nome: string;
+  cidade: string;
+  pais: string;
 }
 
 interface TabelaClassificacaoProps {
   selecoes: Selecao[];
   partidas: Partida[];
+  estadios: EstadioItem[];
   grupo: string;
+  onPartidaAtualizada?: () => void;
 }
 
 function getCorStatus(status: string) {
@@ -74,10 +85,10 @@ function getUltimosResultados(partidas: Partida[], selecaoId: string): Array<"V"
   return resultados;
 }
 
-export function TabelaClassificacao({ selecoes, partidas, grupo }: TabelaClassificacaoProps) {
+export function TabelaClassificacao({ selecoes, partidas, estadios, grupo, onPartidaAtualizada }: TabelaClassificacaoProps) {
   const { toast } = useToast();
-  const [placares, setPlacares] = useState<Record<string, { mandante: number; visitante: number }>>({});
   const [salvando, setSalvando] = useState<string | null>(null);
+  const timeouts = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const selecoesGrupo = selecoes
     .filter((s) => s.grupo === grupo)
@@ -87,11 +98,12 @@ export function TabelaClassificacao({ selecoes, partidas, grupo }: TabelaClassif
     selecoesGrupo.some((s) => s.id === p.mandanteId) && selecoesGrupo.some((s) => s.id === p.visitanteId)
   );
 
-  async function handleSalvar(mandanteId: string, visitanteId: string) {
-    const chave = `${mandanteId}-${visitanteId}`;
-    const placar = placares[chave];
-    if (!placar) return;
+  const getPartidaExistente = useCallback((mandanteId: string, visitanteId: string) => {
+    return partidasGrupo.find((p) => p.mandanteId === mandanteId && p.visitanteId === visitanteId);
+  }, [partidasGrupo]);
 
+  async function handleSalvar(mandanteId: string, visitanteId: string, golsMandante: number, golsVisitante: number, extraDados?: { dataPartida?: string; estadioId?: string }) {
+    const chave = `${mandanteId}-${visitanteId}`;
     setSalvando(chave);
 
     try {
@@ -101,8 +113,9 @@ export function TabelaClassificacao({ selecoes, partidas, grupo }: TabelaClassif
         body: JSON.stringify({
           mandanteId,
           visitanteId,
-          golsMandante: placar.mandante,
-          golsVisitante: placar.visitante,
+          golsMandante,
+          golsVisitante,
+          ...extraDados,
         }),
       });
 
@@ -113,6 +126,8 @@ export function TabelaClassificacao({ selecoes, partidas, grupo }: TabelaClassif
         description: "A classificação foi atualizada.",
         variant: "success",
       });
+
+      if (onPartidaAtualizada) onPartidaAtualizada();
     } catch {
       toast({
         variant: "destructive",
@@ -121,6 +136,25 @@ export function TabelaClassificacao({ selecoes, partidas, grupo }: TabelaClassif
       });
     } finally {
       setSalvando(null);
+    }
+  }
+
+  function formatDateForInput(data?: string | null) {
+    if (!data) return "";
+    try {
+      return data.split("T")[0];
+    } catch {
+      return "";
+    }
+  }
+
+  function formatTimeForInput(data?: string | null) {
+    if (!data) return "";
+    try {
+      const d = new Date(data);
+      return d.toTimeString().slice(0, 5);
+    } catch {
+      return "";
     }
   }
 
@@ -199,62 +233,129 @@ export function TabelaClassificacao({ selecoes, partidas, grupo }: TabelaClassif
       </table>
 
       {selecoesGrupo.length > 0 && (
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-4">
           <h4 className="font-semibold text-sm text-muted-foreground">Editar Placar das Partidas</h4>
           {selecoesGrupo.map((mandante, i) =>
             selecoesGrupo.slice(i + 1).map((visitante) => {
               const chave = `${mandante.id}-${visitante.id}`;
+              const partida = getPartidaExistente(mandante.id, visitante.id);
+              const golsM = String(partida?.golsMandante ?? "");
+              const golsV = String(partida?.golsVisitante ?? "");
+              const dataPartida = formatDateForInput(partida?.dataPartida);
+              const horaPartida = formatTimeForInput(partida?.dataPartida);
+              const estadioSelecionado = partida?.estadioId || "";
+
               return (
-                <div key={chave} className="flex flex-wrap items-center gap-2 rounded-lg border p-3">
-                  <span className="text-sm font-medium min-w-[120px]">{mandante.nome}</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={99}
-                    className="w-16 h-8 text-center"
-                    placeholder="M"
-                    value={placares[chave]?.mandante ?? ""}
-                    onChange={(e) =>
-                      setPlacares((prev) => ({
-                        ...prev,
-                        [chave]: {
-                          mandante: Number(e.target.value),
-                          visitante: prev[chave]?.visitante ?? 0,
-                        },
-                      }))
-                    }
-                    aria-label={`Gols de ${mandante.nome}`}
-                  />
-                  <span className="text-sm font-bold">x</span>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={99}
-                    className="w-16 h-8 text-center"
-                    placeholder="S"
-                    value={placares[chave]?.visitante ?? ""}
-                    onChange={(e) =>
-                      setPlacares((prev) => ({
-                        ...prev,
-                        [chave]: {
-                          mandante: prev[chave]?.mandante ?? 0,
-                          visitante: Number(e.target.value),
-                        },
-                      }))
-                    }
-                    aria-label={`Gols de ${visitante.nome}`}
-                  />
-                  <span className="text-sm font-medium min-w-[120px]">{visitante.nome}</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleSalvar(mandante.id, visitante.id)}
-                    disabled={salvando === chave || placares[chave] === undefined}
-                    className="gap-1"
-                  >
-                    <Save className="h-3 w-3" />
-                    {salvando === chave ? "Salvando..." : "Salvar"}
-                  </Button>
+                <div key={chave} className="rounded-lg border p-4 space-y-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="min-w-[140px]">
+                      <BandeiraSelecao codigoIso={mandante.codigoIso} nome={mandante.nome} />
+                    </div>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={99}
+                      className="w-16 h-9 text-center"
+                      placeholder="M"
+                      defaultValue={golsM}
+                      onBlur={(e) => {
+                        const gM = Number(e.target.value);
+                        const gV = Number((e.target.closest(".flex")?.querySelector('[data-gols-visitante]') as HTMLInputElement)?.value || 0);
+                        handleSalvar(mandante.id, visitante.id, gM, gV);
+                      }}
+                      aria-label={`Gols de ${mandante.nome}`}
+                    />
+                    <span className="text-sm font-bold">x</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={99}
+                      className="w-16 h-9 text-center"
+                      placeholder="S"
+                      defaultValue={golsV}
+                      data-gols-visitante="true"
+                      onBlur={(e) => {
+                        const gV = Number(e.target.value);
+                        const gM = Number((e.target.closest(".flex")?.querySelector('[aria-label*="Gols de"]') as HTMLInputElement)?.value || 0);
+                        handleSalvar(mandante.id, visitante.id, gM, gV);
+                      }}
+                      aria-label={`Gols de ${visitante.nome}`}
+                    />
+                    <div className="min-w-[140px]">
+                      <BandeiraSelecao codigoIso={visitante.codigoIso} nome={visitante.nome} />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <input
+                        type="date"
+                        className="border rounded px-2 py-1 text-xs bg-background"
+                        defaultValue={dataPartida}
+                        onBlur={(e) => {
+                          const novaData = e.target.value;
+                          handleSalvar(
+                            mandante.id, visitante.id,
+                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + mandante.nome + '"]') as HTMLInputElement)?.value || 0),
+                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + visitante.nome + '"]') as HTMLInputElement)?.value || 0),
+                            { dataPartida: novaData, estadioId: estadioSelecionado }
+                          );
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Clock className="h-3.5 w-3.5" />
+                      <input
+                        type="time"
+                        className="border rounded px-2 py-1 text-xs bg-background"
+                        defaultValue={horaPartida}
+                        onBlur={(e) => {
+                          const horaAtual = new Date().toTimeString().slice(0, 5);
+                          const hora = e.target.value || horaAtual;
+                          const dataExistente = (e.target.closest(".rounded-lg")?.querySelector('input[type="date"]') as HTMLInputElement)?.value;
+                          const dataCompleta = dataExistente
+                            ? `${dataExistente}T${hora}:00`
+                            : new Date().toISOString();
+                          handleSalvar(
+                            mandante.id, visitante.id,
+                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + mandante.nome + '"]') as HTMLInputElement)?.value || 0),
+                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + visitante.nome + '"]') as HTMLInputElement)?.value || 0),
+                            { dataPartida: dataCompleta, estadioId: estadioSelecionado }
+                          );
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <select
+                        className="border rounded px-2 py-1 text-xs bg-background max-w-[180px]"
+                        defaultValue={estadioSelecionado}
+                        onBlur={(e) => {
+                          const novoEstadioId = e.target.value;
+                          handleSalvar(
+                            mandante.id, visitante.id,
+                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + mandante.nome + '"]') as HTMLInputElement)?.value || 0),
+                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + visitante.nome + '"]') as HTMLInputElement)?.value || 0),
+                            { dataPartida: dataPartida || undefined, estadioId: novoEstadioId }
+                          );
+                        }}
+                      >
+                        <option value="">Sem estádio</option>
+                        {estadios.map((est) => (
+                          <option key={est.id} value={est.id}>
+                            {est.nome} - {est.cidade}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {salvando === chave && (
+                      <span className="text-xs text-muted-foreground animate-pulse">Salvando...</span>
+                    )}
+                  </div>
                 </div>
               );
             })

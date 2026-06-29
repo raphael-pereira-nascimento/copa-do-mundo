@@ -9,13 +9,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Não autorizado." }, { status: 401 });
     }
 
-    const { mandanteId, visitanteId, golsMandante, golsVisitante } = await req.json();
+    const { mandanteId, visitanteId, golsMandante, golsVisitante, dataPartida, estadioId } = await req.json();
 
     if (golsMandante < 0 || golsVisitante < 0) {
       return NextResponse.json(
         { message: "Gols não podem ser negativos." },
         { status: 400 }
       );
+    }
+
+    const dadosPartida: Record<string, unknown> = {
+      golsMandante,
+      golsVisitante,
+      jogadaPorId: sessao.user.id,
+    };
+
+    if (dataPartida) {
+      dadosPartida.dataPartida = new Date(dataPartida);
+    }
+
+    if (estadioId) {
+      dadosPartida.estadioId = estadioId;
     }
 
     const partidaExistente = await prisma.partida.findFirst({
@@ -25,18 +39,16 @@ export async function POST(req: Request) {
     if (partidaExistente) {
       await prisma.partida.update({
         where: { id: partidaExistente.id },
-        data: { golsMandante, golsVisitante, jogadaPorId: sessao.user.id },
+        data: dadosPartida,
       });
     } else {
       await prisma.partida.create({
         data: {
           mandanteId,
           visitanteId,
-          golsMandante,
-          golsVisitante,
-          jogadaPorId: sessao.user.id,
-          dataPartida: new Date(),
-        },
+          ...dadosPartida,
+          dataPartida: dataPartida ? new Date(dataPartida) : new Date(),
+        } as Record<string, unknown> & { mandanteId: string; visitanteId: string },
       });
     }
 

@@ -11,11 +11,17 @@ export async function GET() {
       include: {
         mandante: { select: { nome: true, codigoIso: true } },
         visitante: { select: { nome: true, codigoIso: true } },
+        estadio: { select: { id: true, nome: true, cidade: true, pais: true } },
       },
       orderBy: { dataPartida: "asc" },
     });
 
-    return NextResponse.json({ selecoes, partidas });
+    const estadios = await prisma.estadio.findMany({
+      select: { id: true, nome: true, cidade: true, pais: true },
+      orderBy: { nome: "asc" },
+    });
+
+    return NextResponse.json({ selecoes, partidas, estadios });
   } catch {
     return NextResponse.json(
       { message: "Erro ao carregar classificação." },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { BotaoVoltar } from "@/components/botaoVoltar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,30 +32,43 @@ interface Partida {
   visitanteId: string;
   golsMandante: number;
   golsVisitante: number;
+  dataPartida?: string | null;
+  estadioId?: string | null;
   mandante: { nome: string; codigoIso: string };
   visitante: { nome: string; codigoIso: string };
+  estadio?: { id: string; nome: string; cidade: string; pais: string } | null;
+}
+
+interface EstadioItem {
+  id: string;
+  nome: string;
+  cidade: string;
+  pais: string;
 }
 
 export default function ClassificacaoPage() {
   const [selecoes, setSelecoes] = useState<Selecao[]>([]);
   const [partidas, setPartidas] = useState<Partida[]>([]);
+  const [estadios, setEstadios] = useState<EstadioItem[]>([]);
   const [carregando, setCarregando] = useState(true);
 
-  useEffect(() => {
-    async function carregar() {
-      try {
-        const resposta = await fetch("/api/classificacao");
-        const dados = await resposta.json();
-        setSelecoes(dados.selecoes);
-        setPartidas(dados.partidas);
-      } catch {
-        console.error("Erro ao carregar classificação");
-      } finally {
-        setCarregando(false);
-      }
+  const carregarDados = useCallback(async () => {
+    try {
+      const resposta = await fetch("/api/classificacao");
+      const dados = await resposta.json();
+      setSelecoes(dados.selecoes);
+      setPartidas(dados.partidas);
+      setEstadios(dados.estadios || []);
+    } catch {
+      console.error("Erro ao carregar classificação");
+    } finally {
+      setCarregando(false);
     }
-    carregar();
   }, []);
+
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -88,7 +101,13 @@ export default function ClassificacaoPage() {
             </TabsList>
             {grupos.map((g) => (
               <TabsContent key={g} value={g}>
-                <TabelaClassificacao selecoes={selecoes} partidas={partidas} grupo={g} />
+                <TabelaClassificacao
+                  selecoes={selecoes}
+                  partidas={partidas}
+                  estadios={estadios}
+                  grupo={g}
+                  onPartidaAtualizada={carregarDados}
+                />
               </TabsContent>
             ))}
           </Tabs>
