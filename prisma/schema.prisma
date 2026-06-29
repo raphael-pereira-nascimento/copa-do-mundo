@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id              String             @id @default(uuid())
+  nome            String
+  email           String             @unique
+  senha           String?
+  imagemPerfil    String?
+  googleId        String?            @unique
+  criadoEm        DateTime           @default(now())
+  partidas        Partida[]
+  figurinhas      UsuarioFigurinha[]
+  pacotes         Int                @default(10)
+}
+
+model Selecao {
+  id               String             @id @default(uuid())
+  nome             String
+  codigoIso        String             @unique
+  grupo            String
+  bandeiraUrl      String?
+  figurinhaUrl     String?
+  jogos            Int                @default(0)
+  vitorias         Int                @default(0)
+  empates          Int                @default(0)
+  derrotas         Int                @default(0)
+  golsPro          Int                @default(0)
+  golsContra       Int                @default(0)
+  saldoGols        Int                @default(0)
+  pontosConduta    Int                @default(0)
+  pontos           Int                @default(0)
+  status           String             @default("pendente")
+  partidasMandante Partida[]          @relation("mandante")
+  partidasVisitante Partida[]         @relation("visitante")
+  figurinha        Figurinha?
+}
+
+model Partida {
+  id             String   @id @default(uuid())
+  mandanteId     String
+  visitanteId    String
+  golsMandante   Int      @default(0)
+  golsVisitante  Int      @default(0)
+  dataPartida    DateTime?
+  estadioId      String?
+  fase           String   @default("grupos")
+  jogadaPorId    String?
+  criadaEm       DateTime @default(now())
+  atualizadaEm   DateTime @updatedAt
+  mandante       Selecao  @relation("mandante", fields: [mandanteId], references: [id])
+  visitante      Selecao  @relation("visitante", fields: [visitanteId], references: [id])
+  estadio        Estadio? @relation(fields: [estadioId], references: [id])
+  jogadaPor      Usuario? @relation(fields: [jogadaPorId], references: [id])
+}
+
+model Estadio {
+  id              String   @id @default(uuid())
+  nome            String
+  slug            String   @unique
+  cidade          String
+  pais            String
+  capacidade      Int
+  anoConstrucao   Int
+  descricao       String   @db.Text
+  historia        String   @db.Text
+  imagemPrincipal String
+  imagens         String[]
+  coordenadas     String?
+  partidas        Partida[]
+}
+
+model Figurinha {
+  id         String             @id @default(uuid())
+  numero     Int                @unique
+  selecaoId  String             @unique
+  raridade   String             @default("comum")
+  usuarios   UsuarioFigurinha[]
+  selecao    Selecao            @relation(fields: [selecaoId], references: [id])
+}
+
+model UsuarioFigurinha {
+  id          String   @id @default(uuid())
+  usuarioId   String
+  figurinhaId String
+  obtidaEm    DateTime @default(now())
+  ehFavorita  Boolean  @default(false)
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  figurinha   Figurinha @relation(fields: [figurinhaId], references: [id])
+
+  @@unique([usuarioId, figurinhaId])
+}
