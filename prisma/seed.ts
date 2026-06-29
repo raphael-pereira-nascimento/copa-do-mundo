@@ -1,68 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import { selecoesData, jogadoresData } from "./seed-data";
+import { partidasData } from "../src/app/data/partidasSeed";
 
 const prisma = new PrismaClient();
-
-const selecoes = [
-  { nome: "México", codigoIso: "MEX", grupo: "A", jogos: 3, vitorias: 3, empates: 0, derrotas: 0, golsPro: 6, golsContra: 0, saldoGols: 6, pontosConduta: -6, pontos: 9, status: "classificado" },
-  { nome: "África do Sul", codigoIso: "RSA", grupo: "A", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 2, golsContra: 3, saldoGols: -1, pontosConduta: -13, pontos: 4, status: "pendente" },
-  { nome: "República da Coreia", codigoIso: "KOR", grupo: "A", jogos: 3, vitorias: 1, empates: 0, derrotas: 2, golsPro: 2, golsContra: 3, saldoGols: -1, pontosConduta: -4, pontos: 3, status: "eliminado" },
-  { nome: "Tchéquia", codigoIso: "CZE", grupo: "A", jogos: 3, vitorias: 0, empates: 1, derrotas: 2, golsPro: 2, golsContra: 6, saldoGols: -4, pontosConduta: -1, pontos: 1, status: "eliminado" },
-
-  { nome: "Suíça", codigoIso: "SUI", grupo: "B", jogos: 3, vitorias: 2, empates: 1, derrotas: 0, golsPro: 7, golsContra: 3, saldoGols: 4, pontosConduta: -3, pontos: 7, status: "classificado" },
-  { nome: "Canadá", codigoIso: "CAN", grupo: "B", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 8, golsContra: 3, saldoGols: 5, pontosConduta: -5, pontos: 4, status: "pendente" },
-  { nome: "Bósnia e Herzegovina", codigoIso: "BIH", grupo: "B", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 5, golsContra: 6, saldoGols: -1, pontosConduta: -10, pontos: 4, status: "pendente" },
-  { nome: "Catar", codigoIso: "QAT", grupo: "B", jogos: 3, vitorias: 0, empates: 1, derrotas: 2, golsPro: 2, golsContra: 10, saldoGols: -8, pontosConduta: -12, pontos: 1, status: "eliminado" },
-
-  { nome: "Brasil", codigoIso: "BRA", grupo: "C", jogos: 3, vitorias: 2, empates: 1, derrotas: 0, golsPro: 7, golsContra: 1, saldoGols: 6, pontosConduta: -5, pontos: 7, status: "classificado" },
-  { nome: "Marrocos", codigoIso: "MAR", grupo: "C", jogos: 3, vitorias: 2, empates: 1, derrotas: 0, golsPro: 6, golsContra: 3, saldoGols: 3, pontosConduta: -1, pontos: 7, status: "pendente" },
-  { nome: "Escócia", codigoIso: "SCO", grupo: "C", jogos: 3, vitorias: 1, empates: 0, derrotas: 2, golsPro: 1, golsContra: 4, saldoGols: -3, pontosConduta: -5, pontos: 3, status: "eliminado" },
-  { nome: "Haiti", codigoIso: "HAI", grupo: "C", jogos: 3, vitorias: 0, empates: 0, derrotas: 3, golsPro: 2, golsContra: 8, saldoGols: -6, pontosConduta: -7, pontos: 0, status: "eliminado" },
-
-  { nome: "EUA", codigoIso: "USA", grupo: "D", jogos: 3, vitorias: 2, empates: 0, derrotas: 1, golsPro: 8, golsContra: 4, saldoGols: 4, pontosConduta: -5, pontos: 6, status: "classificado" },
-  { nome: "Austrália", codigoIso: "AUS", grupo: "D", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 2, golsContra: 2, saldoGols: 0, pontosConduta: -5, pontos: 4, status: "pendente" },
-  { nome: "Paraguai", codigoIso: "PAR", grupo: "D", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 2, golsContra: 4, saldoGols: -2, pontosConduta: -12, pontos: 4, status: "pendente" },
-  { nome: "Turquia", codigoIso: "TUR", grupo: "D", jogos: 3, vitorias: 1, empates: 0, derrotas: 2, golsPro: 3, golsContra: 5, saldoGols: -2, pontosConduta: -3, pontos: 3, status: "eliminado" },
-
-  { nome: "Alemanha", codigoIso: "GER", grupo: "E", jogos: 3, vitorias: 2, empates: 0, derrotas: 1, golsPro: 10, golsContra: 4, saldoGols: 6, pontosConduta: -1, pontos: 6, status: "classificado" },
-  { nome: "Costa do Marfim", codigoIso: "CIV", grupo: "E", jogos: 3, vitorias: 2, empates: 0, derrotas: 1, golsPro: 4, golsContra: 2, saldoGols: 2, pontosConduta: -4, pontos: 6, status: "pendente" },
-  { nome: "Equador", codigoIso: "ECU", grupo: "E", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 2, golsContra: 2, saldoGols: 0, pontosConduta: -5, pontos: 4, status: "pendente" },
-  { nome: "Curaçao", codigoIso: "CUW", grupo: "E", jogos: 3, vitorias: 0, empates: 1, derrotas: 2, golsPro: 1, golsContra: 9, saldoGols: -8, pontosConduta: -7, pontos: 1, status: "eliminado" },
-
-  { nome: "Holanda", codigoIso: "NED", grupo: "F", jogos: 3, vitorias: 2, empates: 1, derrotas: 0, golsPro: 10, golsContra: 4, saldoGols: 6, pontosConduta: -3, pontos: 7, status: "classificado" },
-  { nome: "Japão", codigoIso: "JPN", grupo: "F", jogos: 3, vitorias: 1, empates: 2, derrotas: 0, golsPro: 7, golsContra: 3, saldoGols: 4, pontosConduta: -1, pontos: 5, status: "pendente" },
-  { nome: "Suécia", codigoIso: "SWE", grupo: "F", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 7, golsContra: 7, saldoGols: 0, pontosConduta: -5, pontos: 4, status: "pendente" },
-  { nome: "Tunísia", codigoIso: "TUN", grupo: "F", jogos: 3, vitorias: 0, empates: 0, derrotas: 3, golsPro: 2, golsContra: 12, saldoGols: -10, pontosConduta: -1, pontos: 0, status: "eliminado" },
-
-  { nome: "Bélgica", codigoIso: "BEL", grupo: "G", jogos: 3, vitorias: 1, empates: 2, derrotas: 0, golsPro: 6, golsContra: 2, saldoGols: 4, pontosConduta: -7, pontos: 5, status: "classificado" },
-  { nome: "Egito", codigoIso: "EGY", grupo: "G", jogos: 3, vitorias: 1, empates: 2, derrotas: 0, golsPro: 5, golsContra: 3, saldoGols: 2, pontosConduta: -6, pontos: 5, status: "pendente" },
-  { nome: "Irã", codigoIso: "IRI", grupo: "G", jogos: 3, vitorias: 0, empates: 3, derrotas: 0, golsPro: 3, golsContra: 3, saldoGols: 0, pontosConduta: -6, pontos: 3, status: "pendente" },
-  { nome: "Nova Zelândia", codigoIso: "NZL", grupo: "G", jogos: 3, vitorias: 0, empates: 1, derrotas: 2, golsPro: 4, golsContra: 10, saldoGols: -6, pontosConduta: -4, pontos: 1, status: "eliminado" },
-
-  { nome: "Espanha", codigoIso: "ESP", grupo: "H", jogos: 3, vitorias: 2, empates: 1, derrotas: 0, golsPro: 5, golsContra: 0, saldoGols: 5, pontosConduta: -2, pontos: 7, status: "classificado" },
-  { nome: "Cabo Verde", codigoIso: "CPV", grupo: "H", jogos: 3, vitorias: 0, empates: 3, derrotas: 0, golsPro: 2, golsContra: 2, saldoGols: 0, pontosConduta: -4, pontos: 3, status: "pendente" },
-  { nome: "Uruguai", codigoIso: "URU", grupo: "H", jogos: 3, vitorias: 0, empates: 2, derrotas: 1, golsPro: 3, golsContra: 4, saldoGols: -1, pontosConduta: -9, pontos: 2, status: "pendente" },
-  { nome: "Arábia Saudita", codigoIso: "KSA", grupo: "H", jogos: 3, vitorias: 0, empates: 2, derrotas: 1, golsPro: 1, golsContra: 5, saldoGols: -4, pontosConduta: -6, pontos: 2, status: "eliminado" },
-
-  { nome: "França", codigoIso: "FRA", grupo: "I", jogos: 3, vitorias: 3, empates: 0, derrotas: 0, golsPro: 10, golsContra: 2, saldoGols: 8, pontosConduta: -1, pontos: 9, status: "classificado" },
-  { nome: "Noruega", codigoIso: "NOR", grupo: "I", jogos: 3, vitorias: 2, empates: 0, derrotas: 1, golsPro: 8, golsContra: 7, saldoGols: 1, pontosConduta: -1, pontos: 6, status: "pendente" },
-  { nome: "Senegal", codigoIso: "SEN", grupo: "I", jogos: 3, vitorias: 1, empates: 0, derrotas: 2, golsPro: 8, golsContra: 6, saldoGols: 2, pontosConduta: -2, pontos: 3, status: "pendente" },
-  { nome: "Iraque", codigoIso: "IRQ", grupo: "I", jogos: 3, vitorias: 0, empates: 0, derrotas: 3, golsPro: 1, golsContra: 12, saldoGols: -11, pontosConduta: -8, pontos: 0, status: "eliminado" },
-
-  { nome: "Argentina", codigoIso: "ARG", grupo: "J", jogos: 3, vitorias: 3, empates: 0, derrotas: 0, golsPro: 8, golsContra: 1, saldoGols: 7, pontosConduta: -2, pontos: 9, status: "classificado" },
-  { nome: "Áustria", codigoIso: "AUT", grupo: "J", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 6, golsContra: 6, saldoGols: 0, pontosConduta: -4, pontos: 4, status: "pendente" },
-  { nome: "Argélia", codigoIso: "ALG", grupo: "J", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 5, golsContra: 7, saldoGols: -2, pontosConduta: -1, pontos: 4, status: "pendente" },
-  { nome: "Jordânia", codigoIso: "JOR", grupo: "J", jogos: 3, vitorias: 0, empates: 0, derrotas: 3, golsPro: 3, golsContra: 8, saldoGols: -5, pontosConduta: -4, pontos: 0, status: "eliminado" },
-
-  { nome: "Colômbia", codigoIso: "COL", grupo: "K", jogos: 3, vitorias: 2, empates: 1, derrotas: 0, golsPro: 4, golsContra: 1, saldoGols: 3, pontosConduta: -4, pontos: 7, status: "classificado" },
-  { nome: "Portugal", codigoIso: "POR", grupo: "K", jogos: 3, vitorias: 1, empates: 2, derrotas: 0, golsPro: 6, golsContra: 1, saldoGols: 5, pontosConduta: -4, pontos: 5, status: "pendente" },
-  { nome: "RD do Congo", codigoIso: "COD", grupo: "K", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 4, golsContra: 3, saldoGols: 1, pontosConduta: -5, pontos: 4, status: "pendente" },
-  { nome: "Uzbequistão", codigoIso: "UZB", grupo: "K", jogos: 3, vitorias: 0, empates: 0, derrotas: 3, golsPro: 2, golsContra: 11, saldoGols: -9, pontosConduta: -4, pontos: 0, status: "eliminado" },
-
-  { nome: "Inglaterra", codigoIso: "ENG", grupo: "L", jogos: 3, vitorias: 2, empates: 1, derrotas: 0, golsPro: 6, golsContra: 2, saldoGols: 4, pontosConduta: -2, pontos: 7, status: "classificado" },
-  { nome: "Croácia", codigoIso: "CRO", grupo: "L", jogos: 3, vitorias: 2, empates: 0, derrotas: 1, golsPro: 5, golsContra: 5, saldoGols: 0, pontosConduta: -2, pontos: 6, status: "pendente" },
-  { nome: "Gana", codigoIso: "GHA", grupo: "L", jogos: 3, vitorias: 1, empates: 1, derrotas: 1, golsPro: 2, golsContra: 2, saldoGols: 0, pontosConduta: -3, pontos: 4, status: "pendente" },
-  { nome: "Panamá", codigoIso: "PAN", grupo: "L", jogos: 3, vitorias: 0, empates: 0, derrotas: 3, golsPro: 0, golsContra: 4, saldoGols: -4, pontosConduta: -5, pontos: 0, status: "eliminado" },
-];
 
 const estadios = [
   {
@@ -327,66 +267,87 @@ async function main() {
   console.log("Limpando banco de dados...");
   await prisma.usuarioFigurinha.deleteMany();
   await prisma.figurinha.deleteMany();
+  await prisma.jogador.deleteMany();
   await prisma.partida.deleteMany();
   await prisma.selecao.deleteMany();
   await prisma.estadio.deleteMany();
   await prisma.usuario.deleteMany();
 
   console.log("Inserindo seleções...");
-  for (const s of selecoes) {
-    await prisma.selecao.create({
+  const selecaoPorIso: Record<string, string> = {};
+  for (const s of selecoesData) {
+    const criada = await prisma.selecao.create({
       data: {
         nome: s.nome,
         codigoIso: s.codigoIso,
         grupo: s.grupo,
-        jogos: s.jogos,
-        vitorias: s.vitorias,
-        empates: s.empates,
-        derrotas: s.derrotas,
-        golsPro: s.golsPro,
-        golsContra: s.golsContra,
-        saldoGols: s.saldoGols,
-        pontosConduta: s.pontosConduta,
-        pontos: s.pontos,
-        status: s.status,
+        tecnico: s.tecnico,
         bandeiraUrl: `https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/${s.codigoIso.toLowerCase()}.svg`,
         figurinhaUrl: `https://cdn.jsdelivr.net/gh/lipis/flag-icons/flags/4x3/${s.codigoIso.toLowerCase()}.svg`,
       },
     });
+    selecaoPorIso[s.codigoIso] = criada.id;
   }
 
   console.log("Inserindo estádios...");
+  const estadioPorSlug: Record<string, string> = {};
   for (const e of estadios) {
-    await prisma.estadio.create({
+    const criado = await prisma.estadio.create({ data: e });
+    estadioPorSlug[e.slug] = criado.id;
+  }
+
+  console.log("Inserindo jogadores...");
+  for (const [iso, jogadores] of Object.entries(jogadoresData)) {
+    const selecaoId = selecaoPorIso[iso];
+    if (!selecaoId) {
+      console.warn(`Seleção não encontrada para ISO: ${iso}`);
+      continue;
+    }
+    await prisma.jogador.createMany({
+      data: jogadores.map((j) => ({
+        nome: j.nome,
+        posicao: j.posicao,
+        numeroCamisa: j.numeroCamisa,
+        selecaoId,
+      })),
+    });
+  }
+
+  console.log("Inserindo partidas...");
+  for (const p of partidasData) {
+    const mandanteId = selecaoPorIso[p.mandanteIso];
+    const visitanteId = selecaoPorIso[p.visitanteIso];
+    const estadioId = p.estadioSlug ? estadioPorSlug[p.estadioSlug] : undefined;
+    if (!mandanteId || !visitanteId) {
+      console.warn(`Partida ignorada: ${p.mandanteIso} vs ${p.visitanteIso}`);
+      continue;
+    }
+    await prisma.partida.create({
       data: {
-        nome: e.nome,
-        slug: e.slug,
-        cidade: e.cidade,
-        pais: e.pais,
-        capacidade: e.capacidade,
-        anoConstrucao: e.anoConstrucao,
-        descricao: e.descricao,
-        historia: e.historia,
-        imagemPrincipal: e.imagemPrincipal,
-        imagens: e.imagens,
-        coordenadas: e.coordenadas,
+        mandanteId,
+        visitanteId,
+        estadioId,
+        dataPartida: new Date(p.dataPartida),
+        fase: p.fase,
       },
     });
   }
 
   console.log("Criando figurinhas...");
-  const todasSelecoes = await prisma.selecao.findMany({ orderBy: [{ grupo: "asc" }, { nome: "asc" }] });
+  const grupos = "ABCDEFGHIJKL";
   let numero = 1;
-  for (const selecao of todasSelecoes) {
-    const raridade = selecao.status === "classificado" ? "rara" : "comum";
-    await prisma.figurinha.create({
-      data: {
-        numero,
-        selecaoId: selecao.id,
-        raridade,
-      },
+  for (const g of grupos) {
+    const selecoes = await prisma.selecao.findMany({
+      where: { grupo: g },
+      orderBy: { nome: "asc" },
     });
-    numero++;
+    for (const selecao of selecoes) {
+      const raridade = selecao.codigoIso === "BRA" || selecao.codigoIso === "ARG" || selecao.codigoIso === "GER" || selecao.codigoIso === "FRA" || selecao.codigoIso === "ESP" || selecao.codigoIso === "ENG" ? "rara" : "comum";
+      await prisma.figurinha.create({
+        data: { numero, selecaoId: selecao.id, raridade },
+      });
+      numero++;
+    }
   }
 
   console.log("Seed concluído com sucesso!");
