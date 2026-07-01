@@ -10,7 +10,7 @@ const nextConfig = {
       { protocol: "https", hostname: "img.nsctotal.com.br" },
       { protocol: "https", hostname: "images.copaamerica.com" },
       { protocol: "https", hostname: "lncimg.lance.com.br" },
-      { protocol: "https", hostname: "media.squawka.com" },
+      { protocol: "https", hostname: "upload.wikimedia.org" },
       { protocol: "https", hostname: "cdn.assets-casacor.tec.br" },
       { protocol: "https", hostname: "library.sportingnews.com" },
       { protocol: "https", hostname: "p2.trrsf.com" },

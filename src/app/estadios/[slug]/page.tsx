@@ -121,9 +121,9 @@ const estadiosData: Record<string, EstadioDetalhe> = {
     anoConstrucao: 2003,
     descricao: "Estádio icônico da Filadélfia, conhecido como 'The Linc'.",
     historia: "Inaugurado em 2003, o Lincoln Financial Field é a casa do Philadelphia Eagles. Sua atmosfera elétrica e localização privilegiada na Filadélfia o tornam um dos estádios mais emblemáticos dos EUA.",
-    imagemPrincipal: "https://media.squawka.com/images/sites/12/2026/04/16125657/lincoln-financial-field-philadelphia-stadium-wk-2026-2T62F1E.jpg",
+    imagemPrincipal: "https://upload.wikimedia.org/wikipedia/commons/0/03/Lincoln_Financial_Field%2C_Philadelphia%2C_2024.jpg",
     imagens: [
-      "https://media.squawka.com/images/sites/12/2026/04/16125657/lincoln-financial-field-philadelphia-stadium-wk-2026-2T62F1E.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/0/03/Lincoln_Financial_Field%2C_Philadelphia%2C_2024.jpg",
       "https://images.unsplash.com/photo-1779449607695-c4c7d268ff3a?w=800&q=80",
     ],
     coordenadas: "39.9008,-75.1675",
