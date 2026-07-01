@@ -11,13 +11,13 @@ export async function GET() {
       include: {
         mandante: { select: { nome: true, codigoIso: true } },
         visitante: { select: { nome: true, codigoIso: true } },
-        estadio: { select: { id: true, nome: true, cidade: true, pais: true } },
+        estadio: { select: { id: true, nome: true, slug: true, cidade: true, pais: true, capacidade: true, imagemPrincipal: true } },
       },
       orderBy: { dataPartida: "asc" },
     });
 
     const estadios = await prisma.estadio.findMany({
-      select: { id: true, nome: true, cidade: true, pais: true },
+      select: { id: true, nome: true, slug: true, cidade: true, pais: true, capacidade: true, imagemPrincipal: true },
       orderBy: { nome: "asc" },
     });
 

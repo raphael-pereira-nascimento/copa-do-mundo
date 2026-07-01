@@ -102,7 +102,7 @@ export function TabelaClassificacao({ selecoes, partidas, estadios, grupo, onPar
     return partidasGrupo.find((p) => p.mandanteId === mandanteId && p.visitanteId === visitanteId);
   }, [partidasGrupo]);
 
-  async function handleSalvar(mandanteId: string, visitanteId: string, golsMandante: number, golsVisitante: number, extraDados?: { dataPartida?: string; estadioId?: string }) {
+  async function handleSalvar(mandanteId: string, visitanteId: string, golsMandante: number, golsVisitante: number) {
     const chave = `${mandanteId}-${visitanteId}`;
     setSalvando(chave);
 
@@ -115,7 +115,6 @@ export function TabelaClassificacao({ selecoes, partidas, estadios, grupo, onPar
           visitanteId,
           golsMandante,
           golsVisitante,
-          ...extraDados,
         }),
       });
 
@@ -287,70 +286,24 @@ export function TabelaClassificacao({ selecoes, partidas, estadios, grupo, onPar
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 text-sm">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <input
-                        type="date"
-                        className="border rounded px-2 py-1 text-xs bg-background"
-                        defaultValue={dataPartida}
-                        onBlur={(e) => {
-                          const novaData = e.target.value;
-                          handleSalvar(
-                            mandante.id, visitante.id,
-                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + mandante.nome + '"]') as HTMLInputElement)?.value || 0),
-                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + visitante.nome + '"]') as HTMLInputElement)?.value || 0),
-                            { dataPartida: novaData, estadioId: estadioSelecionado }
-                          );
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-3.5 w-3.5" />
-                      <input
-                        type="time"
-                        className="border rounded px-2 py-1 text-xs bg-background"
-                        defaultValue={horaPartida}
-                        onBlur={(e) => {
-                          const horaAtual = new Date().toTimeString().slice(0, 5);
-                          const hora = e.target.value || horaAtual;
-                          const dataExistente = (e.target.closest(".rounded-lg")?.querySelector('input[type="date"]') as HTMLInputElement)?.value;
-                          const dataCompleta = dataExistente
-                            ? `${dataExistente}T${hora}:00`
-                            : new Date().toISOString();
-                          handleSalvar(
-                            mandante.id, visitante.id,
-                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + mandante.nome + '"]') as HTMLInputElement)?.value || 0),
-                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + visitante.nome + '"]') as HTMLInputElement)?.value || 0),
-                            { dataPartida: dataCompleta, estadioId: estadioSelecionado }
-                          );
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5" />
-                      <select
-                        className="border rounded px-2 py-1 text-xs bg-background max-w-[180px]"
-                        defaultValue={estadioSelecionado}
-                        onBlur={(e) => {
-                          const novoEstadioId = e.target.value;
-                          handleSalvar(
-                            mandante.id, visitante.id,
-                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + mandante.nome + '"]') as HTMLInputElement)?.value || 0),
-                            Number((e.target.closest(".rounded-lg")?.querySelector('[aria-label*="Gols de ' + visitante.nome + '"]') as HTMLInputElement)?.value || 0),
-                            { dataPartida: dataPartida || undefined, estadioId: novoEstadioId }
-                          );
-                        }}
-                      >
-                        <option value="">Sem estádio</option>
-                        {estadios.map((est) => (
-                          <option key={est.id} value={est.id}>
-                            {est.nome} - {est.cidade}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {dataPartida && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span className="text-xs">{new Date(partida!.dataPartida!).toLocaleDateString("pt-BR")}</span>
+                      </div>
+                    )}
+                    {horaPartida && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5" />
+                        <span className="text-xs">{horaPartida}</span>
+                      </div>
+                    )}
+                    {estadioSelecionado && (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span className="text-xs">{estadios.find((e) => e.id === estadioSelecionado)?.nome ?? "Estádio"}</span>
+                      </div>
+                    )}
 
                     {salvando === chave && (
                       <span className="text-xs text-muted-foreground animate-pulse">Salvando...</span>
